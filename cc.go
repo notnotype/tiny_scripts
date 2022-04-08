@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"net/http"
+	purl "net/url"
 	"os"
 	"strconv"
 	"time"
@@ -17,13 +19,30 @@ const BLUE = "\033[1;34m"
 const RESET = "\033[0m"
 
 func CC(url string, num int, ch chan int) {
-	//fmt.Printf("Routine %d created\n", num)
+	c := &http.Client{
+		Transport: &http.Transport{
+			DialContext: (&net.Dialer{
+				Timeout:   40 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ResponseHeaderTimeout: 15 * time.Second,
+			ExpectContinueTimeout: 5 * time.Second,
+		},
+	}
+
 	for {
-		r, err := http.Get(url)
+		r, err := c.Get(url)
 		if err != nil {
-			ch <- 0
-			if debug {
-				fmt.Printf("%sRoutine %d: %s%s\n", RED, num, err, RESET)
+			err2, _ := err.(*purl.Error)
+			if err2.Timeout() {
+				// fmt.Println("timeout")
+			} else {
+				ch <- 0
+				fmt.Printf("%sRoutine %d: %s%s\n", RED, num, err2, RESET)
+				if debug {
+					fmt.Printf("%sRoutine %d: %s%s\n", RED, num, err2, RESET)
+				}
 			}
 			continue
 		}
@@ -46,6 +65,7 @@ func CC(url string, num int, ch chan int) {
 }
 
 func main() {
+
 	var ch = make(chan int)
 	if len(os.Args) < 3 {
 		fmt.Println("Usage: cc [-d] <url> <routine_num>")
@@ -60,8 +80,8 @@ func main() {
 	}
 
 	n, err := strconv.Atoi(os.Args[len(os.Args)-2])
-	if n>=5000{
-		fmt.Println(RED+"Too many routines, number greater than 5000 may cause lack of port"+RESET)
+	if n >= 5000 {
+		fmt.Println(RED + "Too many routines, number greater than 5000 may cause lack of port" + RESET)
 	}
 	if err != nil {
 		fmt.Println("Please input a number")
