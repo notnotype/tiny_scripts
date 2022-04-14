@@ -3,8 +3,6 @@ from time import sleep
 from random import randint
 from datetime import datetime
 
-from sqlalchemy import true
-
 from mirai import Mirai
 
 if __name__ == '__main__':
