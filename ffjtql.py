@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     last_message = ''
     repeated = False
-    target_group = data['摸鱼圣地']
+    target_group = data['2021计算机协会会员群']
     total_ffjtql = 0
 
     # client.send_group_message(target_group, [{'type': 'Image', 'imageId': '{177BF6DE-2AA5-08BA-75F7-E31B5888CC3C}.png', 'url': 'http://gchat.qpic.cn/gchatpic_new/2056963663/1072992996-3115744559-177BF6DE2AA508BA75F7E31B5888CC3C/0?term=2', 'path': None, 'base64': None}])
