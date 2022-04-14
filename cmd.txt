@@ -1,0 +1,2 @@
+python .\start.py GET http://47.119.123.104:8000/ 1 2000 http.txt 500 30
+python .\start.py tcp 47.119.123.104:8000 3000 100 -d

@@ -1,4 +1,5 @@
 import json
+from numpy import isin
 import requests
 from time import sleep
 from os.path import basename
@@ -148,11 +149,13 @@ class Mirai:
         else:
             self.raise_for_api_code(json_data['code'])
 
-    def send_group_message(self, target: int, msg: Union[MessageChain, str]):
+    def send_group_message(self, target: int, msg: Union[MessageChain, str, dict]):
         url = urljoin(self.base_url, '/sendGroupMessage')
 
         if isinstance(msg, str):
             message_chain = [{"type": "Plain", "text": msg}]
+        elif isinstance(msg, list):
+            message_chain = msg
         else:
             message_chain = msg.data
 
