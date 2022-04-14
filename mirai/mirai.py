@@ -1,5 +1,4 @@
 import json
-from numpy import isin
 import requests
 from time import sleep
 from os.path import basename
