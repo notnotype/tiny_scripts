@@ -1,10 +1,12 @@
 """
     usage: fill the `mc_launcher.json` with the following arguments:
-        minecraft_path: the path of `.minecraft` floder
-        platform: the operating system of the machine (windows, linux, osx)
-        version: the version of the minecraft (see .minecraft/versions/ floder)
+        - minecraft_path: the path of `.minecraft` floder
+        - platform: the operating system of the machine (windows, linux, osx)
+        - version: the version of the minecraft (see .minecraft/versions/ floder)
 """
 
+import asyncio
+import aiohttp
 import os
 import platform
 from io import BytesIO
@@ -16,6 +18,7 @@ from zipfile import ZipFile
 
 DEBUG = False
 USE_ABS_PATH = False
+ASYNC_DOWNLOADE = True
 
 RED = '\033[91m'
 GREEN = '\033[32m'
@@ -44,28 +47,76 @@ version_path = f'{versions_path}/{version_name}'
 version_json_path = f'{version_path}/{version_name}.json'
 # lib path
 artifacts_path = f'{minecraft_path}/libraries'
-native_path = f'{version_path}/natives-{platform}'
+# native_path = f'{version_path}/natives-{platform}'
+native_path = f'{version_path}/{version_name}-natives'
 
 client_path = f"{version_path}/{version_name}.jar"
 
+class Downloader:
+    def __init__(self) -> None:
+        self.tasks = []
 
-def download_lib(url, path, is_native, size, exclude=['META-INF/']):
-    # download file
-    print(f'{BLUE}downloading [{url}] to [{path}] {size/1024}KB{RESET}')
-    resp = get(url)
-    resp.raise_for_status()
-    with open(save_path, 'wb') as f:
-        f.write(resp.content)
-    if is_native:
-        zip_file = ZipFile(BytesIO(resp.content), 'r')
-        for file in zip_file.namelist():
-            for each in exclude:
-                if each in file:
-                    break;
-            else:
-                print(f'{BLUE}extracting [{native_path}/{file}]{RESET}')
-                zip_file.extract(file, native_path)
+    def add_task(self, url, path, is_native_, size, exclude=['META-INF/']):
+        self.tasks.append((url, path, is_native_, size, exclude))
 
+    @staticmethod
+    def parse(content, path, is_native, exclude=['META-INF/']):
+        # parse file
+        with open(path, 'wb') as f:
+            f.write(content)
+        if is_native:
+            zip_file = ZipFile(BytesIO(content), 'r')
+            for file in zip_file.namelist():
+                for each in exclude:
+                    if each in file:
+                        break;
+                else:
+                    print(f'{BLUE}extracting [{native_path}/{file}]{RESET}')
+                    zip_file.extract(file, native_path)
+
+    def download_async(self):
+        async def f():
+            async with aiohttp.ClientSession() as session:
+                ts = []
+                for url, path, is_native, size, exclude in self.tasks:
+                    async def f2(_url, _path, _is_native, _size, _exclude):
+                        async with session.get(_url) as resp:
+                            print(f'{BLUE}downloaded [{_url}] to [{_path}] {_size/1024:.2f}KB{RESET}')
+                            resp.raise_for_status()
+                            content = await resp.read()
+                            self.parse(content, _path, _is_native, _exclude)
+                    ts.append(asyncio.create_task(f2(url, path, is_native, size, exclude)))
+                for each in ts:
+                    await each
+        asyncio.run(f())
+    
+    def download(self):
+        print("{RED}downloading libs, please wait...{RESET}")
+        for url, path, is_native, size, exclude in self.tasks:
+            print(f'{BLUE}downloading [{url}] to [{path}] {size/1024:.2f}KB{RESET}')
+            resp = get(url)
+            resp.raise_for_status()
+            self.parse(resp.content, path, is_native, exclude)
+
+
+# def download_lib(url, path, is_native, size, exclude=['META-INF/']):
+#     # download file
+#     print(f'{BLUE}downloading [{url}] to [{path}] {size/1024:.2f}KB{RESET}')
+#     resp = get(url)
+#     resp.raise_for_status()
+#     with open(path, 'wb') as f:
+#         f.write(resp.content)
+#     if is_native:
+#         zip_file = ZipFile(BytesIO(resp.content), 'r')
+#         for file in zip_file.namelist():
+#             for each in exclude:
+#                 if each in file:
+#                     break;
+#             else:
+#                 print(f'{BLUE}extracting [{native_path}/{file}]{RESET}')
+#                 zip_file.extract(file, native_path)
+
+downloader = Downloader()
 
 artifact_lib_paths = []
 
@@ -92,13 +143,13 @@ for library in data['libraries']:
 
 
     save_path = f'{save_dir}/{nam}-{ver}.jar'
-    artifact_lib_paths.append(save_path)
     if DEBUG:
         print(f'{BLUE}save_dir: {save_dir}{RESET}')
         print(f'{BLUE}save_path: {save_path}{RESET}')
 
     # parse artifact
     if 'artifact' in downloads:
+        artifact_lib_paths.append(save_path)
         _download = True
         # compute sha1
         if os.path.exists(save_path):
@@ -112,7 +163,7 @@ for library in data['libraries']:
                 _download = False
         artifact_url = downloads['artifact']['url']
         if _download:
-            download_lib(artifact_url, save_path, False, downloads['artifact']['size'])
+            downloader.add_task(artifact_url, save_path, False, downloads['artifact']['size'])
 
     # parse natives
     if 'natives' in library and platform in library['natives']:
@@ -122,7 +173,13 @@ for library in data['libraries']:
             native_url = downloads['classifiers'][f'natives-{platform}']['url']
             native_size = downloads['classifiers'][f'natives-{platform}']['size']
             if not os.path.exists(_native_path):
-                download_lib(native_url, _native_path, True, native_size)
+                downloader.add_task(native_url, _native_path, True, native_size)
+
+# launch downloader
+if ASYNC_DOWNLOADE:
+    downloader.download_async()
+else:
+    downloader.download()
 
 # jvm setting
 jvm = 'java'
