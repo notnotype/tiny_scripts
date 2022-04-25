@@ -163,7 +163,7 @@ else:
     downloader.download()
 
 # jvm setting
-prefix = 'prime-run'
+prefix = ''
 jvm = 'java'
 # jvm_opts = '-Xmx1024M'
 jvm_opts = ''
