@@ -55,4 +55,4 @@ if __name__ == '__main__':
             total_ffjtql += 1
             continue
         else:
-            sleep(0.9)
+            sleep(0.95)
