@@ -10,7 +10,6 @@ import os
 import platform
 from io import BytesIO
 from requests import get
-from icecream import ic
 from json import loads
 from hashlib import sha1
 from zipfile import ZipFile
