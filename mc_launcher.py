@@ -7,16 +7,21 @@ from hashlib import sha1
 from zipfile import ZipFile
 
 DEBUG = False
+USE_ABS_PATH = False
 
-temp_path = '/tmp'
-
-version_path = 'versions'
-version_name = '1.12.2'
-version_json_path = f'{version_path}/{version_name}/{version_name}.json'
+minecraft_path = '/mnt/d/Notype/things/mc/EpicUraNepAdvanture - Public 1.12.2 高配版/.minecraft'
 platform = 'linux'  # linux, windows, osx
+version_name = '1.12.2'
 
-artifacts_path = 'libraries'
-native_path = f'{version_path}/{version_name}/{version_name}-{platform}'
+# version path
+versions_path = f'{minecraft_path}/versions'
+version_path = f'{versions_path}/{version_name}'
+version_json_path = f'{version_path}/{version_name}.json'
+# lib path
+artifacts_path = f'{minecraft_path}/libraries'
+native_path = f'{version_path}/natives-{platform}'
+
+client_path = f"{version_path}/{version_name}.jar"
 
 {
     "extract": {
@@ -25,29 +30,29 @@ native_path = f'{version_path}/{version_name}/{version_name}-{platform}'
         ]
     },
     "name": "com.mojang:text2speech:1.10.3",
-            "natives": {
-                "linux": "natives-linux",
-                "windows": "natives-windows"
+    "natives": {
+        "linux": "natives-linux",
+        "windows": "natives-windows"
     },
     "downloads": {
-                "classifiers": {
-                    "natives-linux": {
-                        "size": 7833,
-                        "sha1": "ab7896aec3b3dd272b06194357f2d98f832c0cfc",
-                        "path": "com/mojang/text2speech/1.10.3/text2speech-1.10.3-natives-linux.jar",
-                        "url": "https://libraries.minecraft.net/com/mojang/text2speech/1.10.3/text2speech-1.10.3-natives-linux.jar"
-                    },
-                    "natives-windows": {
-                        "size": 81217,
-                        "sha1": "84a4b856389cc4f485275b1f63497a95a857a443",
-                        "path": "com/mojang/text2speech/1.10.3/text2speech-1.10.3-natives-windows.jar",
-                        "url": "https://libraries.minecraft.net/com/mojang/text2speech/1.10.3/text2speech-1.10.3-natives-windows.jar"
-                    }
-                },
-                "artifact": {
-                    "sha1": "48fd510879dff266c3815947de66e3d4809f8668",
-                    "url": "https://libraries.minecraft.net/com/mojang/text2speech/1.10.3/text2speech-1.10.3.jar"
-                }
+        "classifiers": {
+            "natives-linux": {
+                "size": 7833,
+                "sha1": "ab7896aec3b3dd272b06194357f2d98f832c0cfc",
+                "path": "com/mojang/text2speech/1.10.3/text2speech-1.10.3-natives-linux.jar",
+                "url": "https://libraries.minecraft.net/com/mojang/text2speech/1.10.3/text2speech-1.10.3-natives-linux.jar"
+            },
+            "natives-windows": {
+                "size": 81217,
+                "sha1": "84a4b856389cc4f485275b1f63497a95a857a443",
+                "path": "com/mojang/text2speech/1.10.3/text2speech-1.10.3-natives-windows.jar",
+                "url": "https://libraries.minecraft.net/com/mojang/text2speech/1.10.3/text2speech-1.10.3-natives-windows.jar"
+            }
+        },
+        "artifact": {
+            "sha1": "48fd510879dff266c3815947de66e3d4809f8668",
+            "url": "https://libraries.minecraft.net/com/mojang/text2speech/1.10.3/text2speech-1.10.3.jar"
+        }
     }
 }
 
@@ -57,70 +62,23 @@ RESET = '\033[0m'
 BLUE = '\033[94m'
 
 
-def download_lib(name, url, is_native, _sha1, _size, suffix='.jar'):
-    print(f'{GREEN}checkout library [{name}]{RESET}')
-    if not is_native:
-        package, nam, ver = name.split(':')
-        filename = f'{nam}-{ver}{suffix}' 
-        paths = package.split('.')
-        paths.append(nam)
-        paths.append(ver)
-
-        # ic(paths)
-
-        save_path = f'./{artifacts_path}'
-        for path in paths:
-            save_path = f'{save_path}/{path}'
-            if not os.path.exists(save_path):
-                print(f"{RED}creating path: {save_path}{RESET}")
-                os.mkdir(save_path)
-        save_path = f'{save_path}/{filename}'
-
-        if DEBUG:
-            ic(save_path)
-
-        # compute sha1
-        if os.path.exists(save_path):
-            sha1obj = sha1()
-            with open(save_path, 'rb') as f:
-                sha1obj.update(f.read())
-            if sha1obj.hexdigest() == _sha1:
-                if DEBUG:
-                    print(f'{BLUE}[{name}]{RESET} already exists')
-                return save_path
-            else:
-                print(f'{RED}[{name}]{RESET} already exists but is different')
-
-        # download file
-        print(
-            f'{BLUE}downloading [{url}] to [{save_path}] {_size/1024}KB{RESET}')
-        resp = get(url)
-        resp.raise_for_status()
-        with open(save_path, 'wb') as f:
-            f.write(resp.content)
-        return save_path
-    else:
-        print(f'{BLUE}downloading [{url}] {_size/1024}KB{RESET}')
-        resp = get(url)
-        resp.raise_for_status()
+def download_lib(url, path, is_native, size, exclude=['META-INF/']):
+    # download file
+    print(f'{BLUE}downloading [{url}] to [{path}] {size/1024}KB{RESET}')
+    resp = get(url)
+    resp.raise_for_status()
+    with open(save_path, 'wb') as f:
+        f.write(resp.content)
+    if is_native:
         zip_file = ZipFile(BytesIO(resp.content), 'r')
         for file in zip_file.namelist():
-            if file.startswith('META-INF/'):
-                continue
-            print(f'{BLUE}extracting [{native_path}/{file}]{RESET}')
-            zip_file.extract(file, native_path)
+            for each in exclude:
+                if each in file:
+                    break;
+            else:
+                print(f'{BLUE}extracting [{native_path}/{file}]{RESET}')
+                zip_file.extract(file, native_path)
 
-
-artifact_lib_names = []
-native_lib_names = []
-
-artifact_lib_urls = []
-artifact_lib_sha1 = []
-artifact_lib_size = []
-
-native_lib_urls = []
-native_lib_sha1 = []
-native_lib_size = []
 
 artifact_lib_paths = []
 
@@ -129,73 +87,68 @@ with open(version_json_path) as f:
 
 print(f'{BLUE}total libraries: [{len(data["libraries"])}]{RESET}')
 
-for librarie in data['libraries']:
-    # print(f'parsing library: [{librarie["name"]}]')
+for library in data['libraries']:
+    print(f'{GREEN}parsing library: [{library["name"]}]{RESET}')
+    downloads = library['downloads']
+    package, nam, ver = library['name'].split(':')
 
-    downloads = librarie['downloads']
+    paths = package.split('.')
+    paths.append(nam)
+    paths.append(ver)
+    save_dir = f'{artifacts_path}'
+    for path in paths:
+        save_dir = f'{save_dir}/{path}'
+        if not os.path.exists(save_dir):
+            if DEBUG:
+                print(f"{RED}creating dir: {save_dir}{RESET}")
+            os.mkdir(save_dir)
 
-    if 'classifiers' in downloads:
+
+    save_path = f'{save_dir}/{nam}-{ver}.jar'
+    artifact_lib_paths.append(save_path)
+    if DEBUG:
+        print(f'{BLUE}save_dir: {save_dir}{RESET}')
+        print(f'{BLUE}save_path: {save_path}{RESET}')
+
+    # parse artifact
+    if 'artifact' in downloads:
+        _download = True
+        # compute sha1
+        if os.path.exists(save_path):
+            sha1obj = sha1()
+            with open(save_path, 'rb') as f:
+                sha1obj.update(f.read())
+            if sha1obj.hexdigest() != downloads['artifact']['sha1']:
+                _download = True
+                print(f'{RED}[{save_path}] already exists but sha1 is error, Redownload...{RESET}')
+            else:
+                _download = False
+        artifact_url = downloads['artifact']['url']
+        if _download:
+            download_lib(artifact_url, save_path, False, downloads['artifact']['size'])
+
+    # parse natives
+    if 'natives' in library and platform in library['natives']:
+        native_name = library['natives'][platform]
         if f'natives-{platform}' in downloads['classifiers']:
-            _name = (librarie['name'])
-            _url = downloads["classifiers"][f"natives-{platform}"]["url"]
-            _sha1 = downloads["classifiers"][f"natives-{platform}"]["sha1"]
-            _size = downloads["classifiers"][f"natives-{platform}"]["size"]
-            download_lib(_name, _url, True, _sha1, _size)
-        if 'artifact' in downloads:
-            _name = librarie['name']
-            _url = downloads['artifact']['url']
-            _sha1 = downloads['artifact']['sha1']
-            _size = downloads['artifact']['size']
-            temp = download_lib(_name, _url, False, _sha1,
-                                _size, '-natives-linux.jar')
-            artifact_lib_paths.append(temp)
-            # print(f'found artifact [{downloads["artifact"]["url"]}]')
+            _native_path = f'{save_dir}/{nam}-{ver}-natives-{platform}.jar'
+            native_url = downloads['classifiers'][f'natives-{platform}']['url']
+            native_size = downloads['classifiers'][f'natives-{platform}']['size']
+            if not os.path.exists(_native_path):
+                download_lib(native_url, _native_path, True, native_size)
 
-    elif 'artifact' in downloads:
-        _name = librarie['name']
-        _url = downloads['artifact']['url']
-        _sha1 = downloads['artifact']['sha1']
-        _size = downloads['artifact']['size']
-        temp = download_lib(_name, _url, False, _sha1, _size)
-        artifact_lib_paths.append(temp)
-        # print(f'found artifact [{downloads["artifact"]["url"]}]')
-    else:
-        raise RuntimeError('no artifact or classifiers')
-
-# ic(
-#     len(artifact_lib_names),
-#     len(artifact_lib_urls),
-#     len(artifact_lib_sha1),
-#     len(artifact_lib_size),
-#     len(native_lib_names),
-#     len(native_lib_urls),
-#     len(native_lib_sha1),
-#     len(native_lib_size),
-# )
-# for name, url, _sha1, _size in zip(artifact_lib_names, artifact_lib_urls, artifact_lib_sha1, artifact_lib_size):
-#     temp = download_lib(name, url, False, _sha1, _size)
-#     artifact_lib_paths.append(temp)
-
-# for name, url, _sha1, _size in zip(native_lib_names, native_lib_urls, native_lib_sha1, native_lib_size):
-#     download_lib(name, url, True, _sha1, _size)
-
-USE_ABS_PATH = True
-
+# jvm setting
 jvm = 'java'
 # jvm_opts = '-Xmx1024M'
 jvm_opts = ''
+djava = os.path.abspath(native_path) if USE_ABS_PATH else native_path
 
-if USE_ABS_PATH:
-    djava = os.path.abspath(native_path)
-else:
-    djava = native_path
-
-
+# classpath setting
 cp = ''
 print()
 print(f'{BLUE}print classpath: {RESET}')
-client_path = f"./{version_path}/{version_name}/{version_name}.jar"
 
+# generate classpath
 for each in [*artifact_lib_paths, client_path]:
     if USE_ABS_PATH:
         temp = os.path.abspath(each)
@@ -208,11 +161,12 @@ for each in [*artifact_lib_paths, client_path]:
     print(f'{GREEN}{temp} {exsisted}{RESET}')
     cp = f'{cp}{temp}:'
 
+# minecraft setting
 auth_player_name = 'notnotype'
 version_name = 'python mc launcher'
-game_directory = os.path.abspath('.')
+game_directory = os.path.abspath(minecraft_path) if USE_ABS_PATH else minecraft_path
 assets_index_name = data['assetIndex']['id']
-assets_root = os.path.abspath('./assets')
+assets_root = os.path.abspath(f'{minecraft_path}/assets') if USE_ABS_PATH else f'{minecraft_path}/assets'
 auth_uuid = 'd8709223-9e1b-416c-b68b-e33bae70c8b0'
 auth_access_token = 'eyJhbGciOiJIUzI1NiJ9.eyJ4dWlkIjoiMjUzNTQ0MzIwMzgyOTI3NyIsImFnZyI6IkFkdWx0Iiwic3ViIjoiODQzN2Q5OTYtNGE0Mi00YmNiLTk0NzItZWQ3YzY3ZjU4OTYzIiwibmJmIjoxNjQ5NzU2OTQzLCJhdXRoIjoiWEJPWCIsInJvbGVzIjpbXSwiaXNzIjoiYXV0aGVudGljYXRpb24iLCJleHAiOjE2NDk4NDMzNDMsImlhdCI6MTY0OTc1Njk0MywicGxhdGZvcm0iOiJVTktOT1dOIiwieXVpZCI6IjI1MTJkOWJmMTE0MjY5MGJhNDQ0NDMzMzU2YmYzNWZkIn0.pk84JYwdSpK8KdMank0F5IFkm1glGj1uu9GGAbKpjH4'
 user_properties = '{}'
