@@ -18,6 +18,7 @@ from zipfile import ZipFile
 
 DEBUG = False
 USE_ABS_PATH = False
+DOWNLOAD_NATIVE = False
 ASYNC_DOWNLOADE = True
 
 RED = '\033[91m'
@@ -27,7 +28,7 @@ BLUE = '\033[94m'
 
 # load launcher settings
 if os.path.exists('mc_launcher.json'):
-    with open('mc_launcher.json', 'r') as f:
+    with open('mc_launcher.json', 'r', encoding='utf8') as f:
         settings = loads(f.read())
 else:
     settings = {}
@@ -121,7 +122,7 @@ downloader = Downloader()
 artifact_lib_paths = []
 
 with open(version_json_path) as f:
-    data = loads(f.read())
+    data = loads(f.read(), encoding='utf8')
 
 print(f'{BLUE}total libraries: [{len(data["libraries"])}]{RESET}')
 
@@ -172,7 +173,7 @@ for library in data['libraries']:
             _native_path = f'{save_dir}/{nam}-{ver}-natives-{platform}.jar'
             native_url = downloads['classifiers'][f'natives-{platform}']['url']
             native_size = downloads['classifiers'][f'natives-{platform}']['size']
-            if not os.path.exists(_native_path):
+            if not os.path.exists(_native_path) or DOWNLOAD_NATIVE:
                 downloader.add_task(native_url, _native_path, True, native_size)
 
 # launch downloader
@@ -203,7 +204,7 @@ for each in [*artifact_lib_paths, client_path]:
     else:
         exsisted = f"{RED}Not Exsisted{RESET}"
     print(f'{GREEN}{temp} {exsisted}{RESET}')
-    cp = f'{cp}{temp}:'
+    cp = f'{cp}{temp}' + ';' if platform == 'windows' else ';'
 
 # minecraft setting
 auth_player_name = 'notnotype'
@@ -235,4 +236,4 @@ print(f'{BLUE}print game args: {GREEN}{game_args}{RESET}')
 launch_command = f'{jvm} {jvm_opts} -Djava.library.path="{djava}" -cp "{cp}" net.minecraft.client.main.Main {game_args}'
 print()
 print(f'{BLUE}print launch command: {GREEN}{launch_command}{RESET}')
-os.popen(launch_command)
+os.system(launch_command)
