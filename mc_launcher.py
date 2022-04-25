@@ -5,8 +5,9 @@
         version: the version of the minecraft (see .minecraft/versions/ floder)
 """
 
-from io import BytesIO
 import os
+import platform
+from io import BytesIO
 from requests import get
 from icecream import ic
 from json import loads
@@ -16,13 +17,26 @@ from zipfile import ZipFile
 DEBUG = False
 USE_ABS_PATH = False
 
+RED = '\033[91m'
+GREEN = '\033[32m'
+RESET = '\033[0m'
+BLUE = '\033[94m'
+
 # load launcher settings
-with open('mc_launcher.json', 'r') as f:
-    settings = loads(f.read())
+if os.path.exists('mc_launcher.json'):
+    with open('mc_launcher.json', 'r') as f:
+        settings = loads(f.read())
+else:
+    settings = {}
 
 minecraft_path = settings['minecraft_path']  if 'minecraft_path' in settings  else '.'
-platform = settings['platform'] if 'platform' in settings  else 'linux'  # linux, windows, osx
 version_name = settings['version_name'] if 'version_name' in settings else '1.12.2'
+
+# get platform
+platform = platform.system().lower().replace('darwin', 'osx')  # linux, windows, osx
+if platform not in ['linux', 'windows', 'osx']:
+    print(f'{RED}platform [{platform}] not supported{RESET}')
+    exit(1)
 
 # version path
 versions_path = f'{minecraft_path}/versions'
@@ -33,11 +47,6 @@ artifacts_path = f'{minecraft_path}/libraries'
 native_path = f'{version_path}/natives-{platform}'
 
 client_path = f"{version_path}/{version_name}.jar"
-
-RED = '\033[91m'
-GREEN = '\033[32m'
-RESET = '\033[0m'
-BLUE = '\033[94m'
 
 
 def download_lib(url, path, is_native, size, exclude=['META-INF/']):
