@@ -14,7 +14,7 @@ with open('mirai/mirai.config.json', 'r', encoding='utf-8') as f:
     data = loads(f.read())
 client = Mirai(data['host'], data['auth_key'], data['qq'])
 client.auth(data['qq'])
-target_group = data['摸鱼圣地']
+target_group = data['2021计算机协会会员群']
 
 token = "whyffjisgod"
 
