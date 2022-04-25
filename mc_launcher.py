@@ -1,3 +1,10 @@
+"""
+    usage: fill the `mc_launcher.json` with the following arguments:
+        minecraft_path: the path of `.minecraft` floder
+        platform: the operating system of the machine (windows, linux, osx)
+        version: the version of the minecraft (see .minecraft/versions/ floder)
+"""
+
 from io import BytesIO
 import os
 from requests import get
@@ -9,9 +16,13 @@ from zipfile import ZipFile
 DEBUG = False
 USE_ABS_PATH = False
 
-minecraft_path = '/mnt/d/Notype/things/mc/EpicUraNepAdvanture - Public 1.12.2 高配版/.minecraft'
-platform = 'linux'  # linux, windows, osx
-version_name = '1.12.2'
+# load launcher settings
+with open('mc_launcher.json', 'r') as f:
+    settings = loads(f.read())
+
+minecraft_path = settings['minecraft_path']  if 'minecraft_path' in settings  else '.'
+platform = settings['platform'] if 'platform' in settings  else 'linux'  # linux, windows, osx
+version_name = settings['version_name'] if 'version_name' in settings else '1.12.2'
 
 # version path
 versions_path = f'{minecraft_path}/versions'
@@ -22,39 +33,6 @@ artifacts_path = f'{minecraft_path}/libraries'
 native_path = f'{version_path}/natives-{platform}'
 
 client_path = f"{version_path}/{version_name}.jar"
-
-{
-    "extract": {
-        "exclude": [
-            "META-INF/"
-        ]
-    },
-    "name": "com.mojang:text2speech:1.10.3",
-    "natives": {
-        "linux": "natives-linux",
-        "windows": "natives-windows"
-    },
-    "downloads": {
-        "classifiers": {
-            "natives-linux": {
-                "size": 7833,
-                "sha1": "ab7896aec3b3dd272b06194357f2d98f832c0cfc",
-                "path": "com/mojang/text2speech/1.10.3/text2speech-1.10.3-natives-linux.jar",
-                "url": "https://libraries.minecraft.net/com/mojang/text2speech/1.10.3/text2speech-1.10.3-natives-linux.jar"
-            },
-            "natives-windows": {
-                "size": 81217,
-                "sha1": "84a4b856389cc4f485275b1f63497a95a857a443",
-                "path": "com/mojang/text2speech/1.10.3/text2speech-1.10.3-natives-windows.jar",
-                "url": "https://libraries.minecraft.net/com/mojang/text2speech/1.10.3/text2speech-1.10.3-natives-windows.jar"
-            }
-        },
-        "artifact": {
-            "sha1": "48fd510879dff266c3815947de66e3d4809f8668",
-            "url": "https://libraries.minecraft.net/com/mojang/text2speech/1.10.3/text2speech-1.10.3.jar"
-        }
-    }
-}
 
 RED = '\033[91m'
 GREEN = '\033[32m'
