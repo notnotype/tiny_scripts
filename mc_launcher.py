@@ -1,7 +1,6 @@
 """
     usage: fill the `mc_launcher.json` with the following arguments:
         - minecraft_path: the path of `.minecraft` floder
-        - platform: the operating system of the machine (windows, linux, osx)
         - version: the version of the minecraft (see .minecraft/versions/ floder)
 """
 
@@ -98,24 +97,6 @@ class Downloader:
             resp = get(url)
             resp.raise_for_status()
             self.parse(resp.content, path, is_native, exclude)
-
-
-# def download_lib(url, path, is_native, size, exclude=['META-INF/']):
-#     # download file
-#     print(f'{BLUE}downloading [{url}] to [{path}] {size/1024:.2f}KB{RESET}')
-#     resp = get(url)
-#     resp.raise_for_status()
-#     with open(path, 'wb') as f:
-#         f.write(resp.content)
-#     if is_native:
-#         zip_file = ZipFile(BytesIO(resp.content), 'r')
-#         for file in zip_file.namelist():
-#             for each in exclude:
-#                 if each in file:
-#                     break;
-#             else:
-#                 print(f'{BLUE}extracting [{native_path}/{file}]{RESET}')
-#                 zip_file.extract(file, native_path)
 
 downloader = Downloader()
 
