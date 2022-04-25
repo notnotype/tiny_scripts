@@ -121,8 +121,8 @@ downloader = Downloader()
 
 artifact_lib_paths = []
 
-with open(version_json_path) as f:
-    data = loads(f.read(), encoding='utf8')
+with open(version_json_path, encoding='utf8') as f:
+    data = loads(f.read())
 
 print(f'{BLUE}total libraries: [{len(data["libraries"])}]{RESET}')
 
@@ -183,6 +183,7 @@ else:
     downloader.download()
 
 # jvm setting
+prefix = 'prime-run'
 jvm = 'java'
 # jvm_opts = '-Xmx1024M'
 jvm_opts = ''
@@ -204,7 +205,7 @@ for each in [*artifact_lib_paths, client_path]:
     else:
         exsisted = f"{RED}Not Exsisted{RESET}"
     print(f'{GREEN}{temp} {exsisted}{RESET}')
-    cp = f'{cp}{temp}' + ';' if platform == 'windows' else ';'
+    cp = f'{cp}{temp}' + (';' if platform == 'windows' else ':')
 
 # minecraft setting
 auth_player_name = 'notnotype'
@@ -233,7 +234,7 @@ game_args = game_args.replace('${version_type}', f'"{version_type}"')
 print()
 print(f'{BLUE}print game args: {GREEN}{game_args}{RESET}')
 
-launch_command = f'{jvm} {jvm_opts} -Djava.library.path="{djava}" -cp "{cp}" net.minecraft.client.main.Main {game_args}'
+launch_command = f'{prefix} {jvm} {jvm_opts} -Djava.library.path="{djava}" -cp "{cp}" net.minecraft.client.main.Main {game_args}'
 print()
 print(f'{BLUE}print launch command: {GREEN}{launch_command}{RESET}')
 os.system(launch_command)
