@@ -158,9 +158,11 @@ for library in data['libraries']:
 
 # launch downloader
 if ASYNC_DOWNLOADE:
-    downloader.download_async()
+    # downloader.download_async()
+    pass
 else:
-    downloader.download()
+    # downloader.download()
+    pass
 
 # jvm setting
 prefix = ''
