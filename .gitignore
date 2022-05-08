@@ -18,3 +18,4 @@ mirai/mirai.config.json
 .idea/
 __pycache__/
 logs/
+config/*
