@@ -25,6 +25,7 @@ if __name__ == '__main__':
         for message in messages:
             if message['type'] == 'GroupMessage':
                 if message['sender']['group']['id'] == target_group:
+                    print("parse msg: {}".format(message))
                     if message['messageChain'][1]['type'] == 'Plain':
                         if message['messageChain'][1]['text'] == 'ffjtql':
                             total_ffjtql += 1
@@ -41,11 +42,10 @@ if __name__ == '__main__':
                             repeated = True
                     else:
                         repeated = False
-                    print("message", message, repeated)
                     last_message = message['messageChain'][1:]
 
         now = datetime.now()
-        if now.hour == 21 and now.minute == 0 and (now.second == 0 or now.second == 1 ):
+        if now.hour == 21 and now.minute == 0 and now.second == 1: 
             client.send_group_message(
                 target_group, '今日ffjtql次数:' + str(total_ffjtql))
             total_ffjtql = 0

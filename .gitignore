@@ -19,3 +19,4 @@ mirai/mirai.config.json
 __pycache__/
 logs/
 config/*
+*.swp

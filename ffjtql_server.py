@@ -24,8 +24,7 @@ app = FastAPI()
 @app.post('/send_group_message')
 async def _(msg: str, auth_key: str):
     sleep(0.50)
-    msg.replace('jjj', 'ffj')
-    msg.replace('JJJ', 'ffj')
+    msg = msg.replace('jjj', 'ffj').replace('JJJ', 'ffj')
     if auth_key != token:
         raise fastapi.HTTPException(401)
     print("send msg [{}] to [{}]".format(msg, target_group))
@@ -36,4 +35,4 @@ async def _(msg: str, auth_key: str):
         return str(e)
     return msg
 
-uvicorn.run(app, port=3000, host="0.0.0.0")
+uvicorn.run(app, port=3001, host="0.0.0.0")
